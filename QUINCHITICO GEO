@@ -1,0 +1,534 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QUINCHITICO GEO - Aprendizaje de Geometría</title>
+    <style>
+        :root {
+            --primary: #4F46E5; /* Índigo */
+            --primary-dark: #4338CA;
+            --secondary: #10B981; /* Esmeralda */
+            --accent: #F59E0B; /* Ámbar */
+            --danger: #EF4444;
+            --dark: #1F2937;
+            --light: #F3F4F6;
+            --white: #FFFFFF;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --radius: 12px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+        body { background-color: var(--light); color: var(--dark); display: flex; min-height: 100vh; }
+
+        /* Sidebar */
+        aside {
+            width: 280px;
+            background-color: var(--white);
+            border-right: 1px solid #E5E7EB;
+            display: flex; flex-direction: column;
+            position: fixed; height: 100%; z-index: 10;
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .brand {
+            padding: 20px; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid #E5E7EB;
+            background-color: var(--primary); color: var(--white);
+        }
+        .brand svg { width: 40px; height: 40px; fill: var(--white); }
+        .brand h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 0.5px; }
+
+        .category-header {
+            padding: 15px 15px 5px 15px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #9CA3AF;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .topic-btn {
+            display: flex; align-items: center; width: 100%;
+            padding: 10px 15px; margin-bottom: 4px; border: none;
+            background: transparent; border-radius: 8px; cursor: pointer;
+            text-align: left; font-size: 0.9rem; color: #4B5563; transition: all 0.2s;
+        }
+        .topic-btn:hover { background-color: #EEF2FF; color: var(--primary); }
+        .topic-btn.active { background-color: var(--primary); color: var(--white); font-weight: 600; }
+        .topic-icon { margin-right: 10px; width: 20px; text-align: center; }
+
+        /* Main Content */
+        main { flex: 1; margin-left: 280px; padding: 30px; max-width: 1000px; margin-right: auto; }
+        
+        h2 { font-size: 1.8rem; color: var(--dark); margin-bottom: 5px; }
+        .content-card { background: var(--white); border-radius: var(--radius); box-shadow: var(--shadow); padding: 25px; margin-bottom: 25px; }
+        h3 { color: var(--primary); margin-bottom: 15px; font-size: 1.3rem; }
+        p { line-height: 1.6; margin-bottom: 15px; color: #374151; }
+        .formula-box { background-color: #F0FDF4; border: 1px solid #BBF7D0; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; font-weight: bold; font-size: 1rem; color: #166534; }
+
+        /* Problem Area */
+        .problem-area { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; align-items: start; }
+        .canvas-container { width: 100%; height: 250px; background-color: #FAFAFA; border: 2px dashed #E5E7EB; border-radius: var(--radius); display: flex; justify-content: center; align-items: center; position: relative; }
+        canvas { max-width: 100%; max-height: 100%; }
+        
+        .controls { display: flex; flex-direction: column; gap: 15px; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; }
+        label { font-weight: 600; font-size: 0.9rem; color: #4B5563; }
+        
+        input, select { padding: 12px; border: 2px solid #E5E7EB; border-radius: 8px; font-size: 1rem; width: 100%; }
+        input:focus, select:focus { border-color: var(--primary); outline: none; }
+
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: transform 0.1s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background-color: var(--primary); color: var(--white); }
+        .btn-outline { background-color: transparent; border: 2px solid var(--primary); color: var(--primary); }
+        .btn-warning { background-color: var(--accent); color: var(--white); }
+
+        .feedback-box { margin-top: 15px; padding: 15px; border-radius: 8px; display: none; }
+        .feedback-box.success { background-color: #DCFCE7; color: #166534; display: block; border: 1px solid #86EFAC; }
+        .feedback-box.error { background-color: #FEE2E2; color: #991B1B; display: block; border: 1px solid #FCA5A5; }
+
+        .steps-container { margin-top: 20px; display: none; animation: fadeIn 0.5s ease; }
+        .steps-container.visible { display: block; }
+        .step-item { display: flex; gap: 15px; margin-bottom: 15px; padding: 10px; background-color: #F9FAFB; border-radius: 8px; border-left: 4px solid var(--accent); }
+        .step-number { font-weight: bold; color: var(--accent); background: #FEF3C7; width: 28px; height: 28px; border-radius: 50%; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+
+        .toast { position: fixed; bottom: 20px; right: 20px; background-color: var(--dark); color: var(--white); padding: 12px 24px; border-radius: 8px; box-shadow: 0 10px 15px rgba(0,0,0,0.2); transform: translateY(100px); transition: transform 0.3s; z-index: 100; }
+        .toast.show { transform: translateY(0); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            aside { transform: translateX(-100%); }
+            aside.open { transform: translateX(0); }
+            main { margin-left: 0; padding: 20px; }
+            .mobile-toggle { display: block; position: fixed; top: 15px; left: 15px; z-index: 20; background: var(--primary); color: white; border: none; padding: 10px; border-radius: 8px; }
+            .problem-area { grid-template-columns: 1fr; }
+        }
+        @media (min-width: 769px) { .mobile-toggle { display: none; } }
+    </style>
+</head>
+<body>
+
+    <div id="toast" class="toast">Mensaje</div>
+    <button class="mobile-toggle" onclick="toggleSidebar()">☰ Menú</button>
+
+    <aside id="sidebar">
+        <div class="brand">
+            <!-- Logo SVG -->
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="45" stroke="white" stroke-width="5" fill="none" opacity="0.5"/>
+                <path d="M50 15 L85 75 L15 75 Z" fill="white"/>
+                <circle cx="50" cy="55" r="10" fill="#4F46E5"/>
+            </svg>
+            <h1>QUINCHITICO<br><span style="font-weight:300; font-size:0.8em; opacity:0.9;">GEO</span></h1>
+        </div>
+        <nav id="topicsList"></nav>
+    </aside>
+
+    <main>
+        <header>
+            <h2 id="topicTitle">Selecciona un tema</h2>
+            <p id="topicDesc">Explora el mundo de la geometría.</p>
+        </header>
+
+        <section class="content-card">
+            <article id="theorySection">
+                <h3>📚 Teoría</h3>
+                <div id="theoryContent"></div>
+            </article>
+        </section>
+
+        <section class="content-card">
+            <article>
+                <h3>📝 Práctica</h3>
+                <div class="problem-area">
+                    <div class="canvas-container"><canvas id="geometryCanvas" width="300" height="250"></canvas></div>
+                    <div class="controls">
+                        <div class="input-group"><label id="questionLabel">Pregunta:</label><div id="inputContainer"></div></div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-primary" onclick="checkAnswer()">Verificar</button>
+                            <button class="btn btn-outline" onclick="generateNewExercise()">Nuevo</button>
+                        </div>
+                        <button class="btn btn-warning" id="btnShowSteps" onclick="showSteps()" style="display:none;">Ver Solución 😟</button>
+                    </div>
+                </div>
+                <div id="feedback" class="feedback-box"></div>
+                <div id="stepsArea" class="steps-container"><h3>💡 Pasos</h3><div id="stepsList"></div></div>
+            </article>
+        </section>
+    </main>
+
+    <script>
+        // --- DATOS DE LOS TEMAS (EXPANDIDO) ---
+        const topics = [
+            // 1. RECTAS Y ÁNGULOS
+            {
+                category: 'Fundamentos',
+                id: 'rectas', title: 'Rectas', description: 'Paralelas y Perpendiculares.',
+                theory: '<p><strong>Paralelas:</strong> Nunca se cruzan (misma pendiente).</p><p><strong>Perpendiculares:</strong> Se cruzan a 90°.</p>',
+                generate: () => {
+                    const type = Math.floor(Math.random() * 3); 
+                    let m1, m2, rel, text;
+                    if (type === 0) { m1=1; m2=1; rel='paralelas'; text='Paralelas'; }
+                    else if (type === 1) { m1=1; m2=-1; rel='perpendiculares'; text='Perpendiculares'; }
+                    else { m1=1; m2=0.5; rel='ninguna'; text='Ninguna'; }
+                    const b1 = Math.floor(Math.random()*40)-20;
+                    const b2 = Math.floor(Math.random()*40)-20;
+                    return { params: {m1,m2,b1,b2, type: rel}, answer: rel, question: '¿Relación entre las rectas?' };
+                },
+                draw: (ctx,p) => {
+                    ctx.clearRect(0,0,300,250);
+                    const yOff=125;
+                    const plot = (m,b,c,w) => {
+                        const y1=-(m*0)+b+yOff, y2=-(m*300)+b+yOff;
+                        ctx.beginPath(); ctx.moveTo(0,y1); ctx.lineTo(300,y2); ctx.strokeStyle=c; ctx.lineWidth=4; ctx.stroke();
+                    };
+                    plot(p.m1,p.b1,'#4F46E5', 300); // Azul
+                    plot(p.m2,p.b2,'#EF4444', 300); // Rojo
+                },
+                getSteps: (p,a) => {
+                    let exp = a==='paralelas'?'Tienen la misma inclinación.' : (a==='perpendiculares'?'Forman un ángulo de 90° perfectamente.' : 'Se cruzan pero no a 90° ni son paralelas.');
+                    return [`Observamos la inclinación de ambas líneas.`, exp, `Por tanto son: ${a}.`];
+                }
+            },
+            {
+                category: 'Fundamentos',
+                id: 'recta_num', title: 'Recta Numérica', description: 'Coordenadas y distancias.',
+                theory: '<p>La recta numérica representa números reales. La distancia entre dos puntos A y B es el valor absoluto de su diferencia: |B - A|.</p>',
+                generate: () => {
+                    const p1 = Math.floor(Math.random()*20)-10;
+                    const p2 = Math.floor(Math.random()*20)-10;
+                    const dist = Math.abs(p2 - p1);
+                    return { params: {p1, p2}, answer: dist, question: `Punto A en ${p1}, Punto B en ${p2}. ¿Distancia entre A y B?` };
+                },
+                draw: (ctx,p) => {
+                    ctx.clearRect(0,0,300,250);
+                    ctx.strokeStyle='#374151'; ctx.lineWidth=2;
+                    ctx.beginPath(); ctx.moveTo(20,125); ctx.lineTo(280,125); ctx.stroke();
+                    // Marcas
+                    for(let i=-10; i<=10; i++) {
+                        const x = 150 + (i*12);
+                        ctx.beginPath(); ctx.moveTo(x,120); ctx.lineTo(x,130); ctx.stroke();
+                        if(i%5===0) ctx.fillText(i, x-5, 145);
+                    }
+                    // Puntos
+                    ctx.fillStyle='#4F46E5'; 
+                    const x1 = 150 + (p.p1*12), x2 = 150 + (p.p2*12);
+                    ctx.beginPath(); ctx.arc(x1,125,5,0,Math.PI*2); ctx.fill();
+                    ctx.fillStyle='#EF4444'; ctx.beginPath(); ctx.arc(x2,125,5,0,Math.PI*2); ctx.fill();
+                },
+                getSteps: (p,a) => [`Posición A: ${p.p1}`, `Posición B: ${p.p2}`, `Distancia = |${p.p2} - ${p.p1}|`, `Resultado: ${a}`]
+            },
+            {
+                category: 'Fundamentos',
+                id: 'angulos', title: 'Tipos de Ángulos', description: 'Agudo, Obtuso, Recto, Llano.',
+                theory: '<p><strong>Agudo:</strong> < 90°. <strong>Recto:</strong> = 90°. <strong>Obtuso:</strong> > 90° y < 180°. <strong>Llano:</strong> = 180°.</p>',
+                generate: () => {
+                    const angle = [30, 45, 90, 120, 180][Math.floor(Math.random()*5)];
+                    let type = angle<90?'agudo' : (angle===90?'recto' : (angle<180?'obtuso' : 'llano'));
+                    return { params: {angle}, answer: type, question: '¿Qué tipo de ángulo se muestra?' };
+                },
+                draw: (ctx,p) => {
+                    ctx.clearRect(0,0,300,250);
+                    ctx.translate(150, 125);
+                    ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(100,0); ctx.strokeStyle='#374151'; ctx.lineWidth=3; ctx.stroke();
+                    ctx.beginPath(); 
+                    // Convertir angulo a radianes negativo para girar "arriba" en canvas
+                    ctx.lineTo(100*Math.cos(-p.angle*Math.PI/180), 100*Math.sin(-p.angle*Math.PI/180)); 
+                    ctx.stroke();
+                    // Arco
+                    ctx.beginPath(); ctx.arc(0,0,40,0, -p.angle*Math.PI/180, true); ctx.strokeStyle='var(--accent)'; ctx.stroke();
+                    ctx.fillText(p.angle+'°', 50, 50);
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
+                },
+                getSteps: (p,a) => [`El ángulo mide ${p.angle} grados.`, p.angle<90?'Menos de 90° es Agudo.' : (p.angle===90?'90° es Recto.' : (p.angle<180?'Entre 90° y 180° es Obtuso.' : '180° es Llano.')), `Respuesta: ${a}`]
+            },
+            {
+                category: 'Fundamentos',
+                id: 'calc_angulos', title: 'Cálculo de Ángulos', description: 'Complementarios y Suplementarios.',
+                theory: '<p><strong>Complementarios:</strong> Suman 90°.<br><strong>Suplementarios:</strong> Suman 180°.</p>',
+                generate: () => {
+                    const type = Math.random()>0.5 ? 'comp' : 'sup';
+                    const a1 = Math.floor(Math.random()*40)+10;
+                    const total = type==='comp'?90:180;
+                    const a2 = total - a1;
+                    return { params: {type, a1, total}, answer: a2, question: `Si un ángulo mide ${a1}°, ¿cuánto mide su ángulo ${type==='comp'?'complementario':'suplementario'}?` };
+                },
+                draw: (ctx,p) => {
+                    ctx.clearRect(0,0,300,250);
+                    ctx.font='16px Arial';
+                    ctx.fillText(`Suma total = ${p.total}°`, 80, 30);
+                    ctx.beginPath(); ctx.arc(80,150, 60, 0, Math.PI*2); ctx.strokeStyle='#ddd'; ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(80,150); ctx.lineTo(140,150); ctx.strokeStyle='#4F46E5'; ctx.lineWidth=3; ctx.stroke();
+                    ctx.fillText(`${p.a1}°`, 95, 140);
+                },
+                getSteps: (p,a) => [`Ángulo dado: ${p.a1}.`, `Total a sumar: ${p.total}.`, `Cálculo: ${p.total} - ${p.a1}.`, `Resultado: ${a}`]
+            },
+
+            // 2. ÁREAS Y PERÍMETROS
+            {
+                category: 'Figuras Planas',
+                id: 'area_per_rect', title: 'Rectángulo (A y P)', description: 'Área y Perímetro.',
+                theory: '<div class="formula-box">Área = Base × Altura<br>Perímetro = 2 × (Base + Altura)</div>',
+                generate: () => {
+                    const b = Math.floor(Math.random()*8)+4, h = Math.floor(Math.random()*6)+3;
+                    return { params:{b,h}, answer: {a:b*h, p:2*(b+h)}, question: 'Calcula el Área (A) y el Perímetro (P).' };
+                },
+                draw: (ctx,p) => drawPoly(ctx, [[0,0],[p.b*20,0],[p.b*20,p.h*20],[0,p.h*20]], p.b, p.h),
+                getSteps: (p,a) => [`Base=${p.b}, Altura=${p.h}.`, `Área = ${p.b}×${p.h} = ${a.a}.`, `Perímetro = 2×(${p.b}+${p.h}) = ${a.p}.`]
+            },
+            {
+                category: 'Figuras Planas',
+                id: 'area_per_sq', title: 'Cuadrado (A y P)', description: 'Área y Perímetro.',
+                theory: '<div class="formula-box">Área = Lado × Lado (L²)<br>Perímetro = 4 × Lado</div>',
+                generate: () => {
+                    const l = Math.floor(Math.random()*8)+3;
+                    return { params:{l}, answer: {a:l*l, p:4*l}, question: 'Calcula Área y Perímetro.' };
+                },
+                draw: (ctx,p) => drawPoly(ctx, [[0,0],[p.l*20,0],[p.l*20,p.l*20],[0,p.l*20]], p.l, p.l),
+                getSteps: (p,a) => [`Lado=${p.l}.`, `Área = ${p.l}² = ${a.a}.`, `Perímetro = 4×${p.l} = ${a.p}.`]
+            },
+            {
+                category: 'Figuras Planas',
+                id: 'area_per_tri', title: 'Triángulo (A y P)', description: 'Isósceles simple.',
+                theory: '<div class="formula-box">Área = (Base × Altura) / 2<br>Perímetro = Suma de lados</div>',
+                generate: () => {
+                    const b = Math.floor(Math.random()*10)+6;
+                    const h = Math.floor(Math.random()*8)+5;
+                    const l = Math.sqrt(Math.pow(b/2,2) + Math.pow(h,2));
+                    return { params:{b,h,l}, answer: {a: (b*h)/2, p: parseFloat((b+2*l).toFixed(2))}, question: 'Calcula Área y Perímetro.' };
+                },
+                draw: (ctx,p) => {
+                    const scale=12;
+                    const w=p.b*scale, h=p.h*scale;
+                    const cx=150, by=200;
+                    ctx.clearRect(0,0,300,250);
+                    ctx.beginPath();
+                    ctx.moveTo(cx, by-h); ctx.lineTo(cx-w/2, by); ctx.lineTo(cx+w/2, by); ctx.closePath();
+                    ctx.fillStyle='#FEF3C7'; ctx.fill(); ctx.stroke();
+                    ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(cx,by-h); ctx.lineTo(cx,by); ctx.stroke(); ctx.setLineDash([]);
+                    ctx.fillText(`b=${p.b}`, cx-w/2, by+15); ctx.fillText(`h=${p.h}`, cx+5, by-h/2);
+                },
+                getSteps: (p,a) => [`Base=${p.b}, Altura=${p.h}.`, `Área = (${p.b}×${p.h})/2 = ${a.a}.`, `Perímetro = ${p.b} + ${p.l} + ${p.l} ≈ ${a.p}.`]
+            },
+            {
+                category: 'Figuras Planas',
+                id: 'area_per_rom', title: 'Rombo (A y P)', description: 'Diagonales Mayor y Menor.',
+                theory: '<div class="formula-box">Área = (D × d) / 2<br>Perímetro = 4 × Lado</div>',
+                generate: () => {
+                    const D = Math.floor(Math.random()*10)+10; 
+                    const d = Math.floor(Math.random()*8)+4; 
+                    const l = Math.sqrt(Math.pow(D/2, 2) + Math.pow(d/2, 2));
+                    return { params:{D,d,l}, answer: {a: (D*d)/2, p: parseFloat((4*l).toFixed(2))}, question: 'D=Mayor, d=Menor. Calcula A y P.' };
+                },
+                draw: (ctx,p) => {
+                    ctx.clearRect(0,0,300,250);
+                    const cx=150, cy=125;
+                    const scale=8;
+                    const dx=p.D*scale/2, dy=p.d*scale/2;
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy-dy); ctx.lineTo(cx+dx, cy); ctx.moveTo(cx, cy+dy); ctx.lineTo(cx-dx, cy); 
+                    ctx.strokeStyle='#4F46E5'; ctx.lineWidth=1; ctx.stroke();
+                    // Rombo
+                    ctx.beginPath(); ctx.moveTo(cx, cy-dy); ctx.lineTo(cx+dx, cy); ctx.lineTo(cx, cy+dy); ctx.lineTo(cx-dx, cy); ctx.closePath();
+                    ctx.strokeStyle='#1F2937'; ctx.lineWidth=2; ctx.stroke();
+                    ctx.fillStyle='#E0E7FF'; ctx.fill();
+                    ctx.fillStyle='#1F2937'; ctx.fillText(`D=${p.D}`, cx+10, cy-dy); ctx.fillText(`d=${p.d}`, cx+dx, cy+20);
+                },
+                getSteps: (p,a) => [`D=${p.D}, d=${p.d}.`, `Área = (${p.D}×${p.d})/2 = ${a.a}.`, `Lado ≈ ${p.l.toFixed(2)}.`, `Perímetro = 4×${p.l.toFixed(2)} ≈ ${a.p}.`]
+            },
+            {
+                category: 'Figuras Planas',
+                id: 'area_per_par', title: 'Paralelogramo (A y P)', description: 'Base, Altura y Lado.',
+                theory: '<div class="formula-box">Área = Base × Altura<br>Perímetro = 2 × (Base + Lado)</div>',
+                generate: () => {
+                    const b = Math.floor(Math.random()*8)+5;
+                    const h = Math.floor(Math.random()*5)+3;
+                    const l = Math.floor(Math.random()*6)+4; 
+                    return { params:{b,h,l}, answer: {a: b*h, p: 2*(b+l)}, question: 'Base, Altura y Lado. Calcula A y P.' };
+                },
+                draw: (ctx,p) => {
+                    const s=12;
+                    const w=p.b*s, h=p.h*s, off=p.l*s*0.4; 
+                    const cx=(300-w)/2, cy=(250-h)/2+20;
+                    ctx.clearRect(0,0,300,250);
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy); ctx.lineTo(cx+w, cy); ctx.lineTo(cx+w+off, cy+h); ctx.lineTo(cx+off, cy+h); ctx.closePath();
+                    ctx.fillStyle='#D1FAE5'; ctx.fill(); ctx.stroke();
+                    ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(cx+off, cy+h); ctx.lineTo(cx+off, cy); ctx.stroke();
+                    ctx.fillText(`b=${p.b}`, cx+w/2, cy-5); ctx.fillText(`h=${p.h}`, cx+off+5, cy+h/2); ctx.fillText(`l=${p.l}`, cx+w+off/2, cy+h+15);
+                },
+                getSteps: (p,a) => [`Base=${p.b}, Altura=${p.h}, Lado=${p.l}.`, `Área = ${p.b}×${p.h} = ${a.a}.`, `Perímetro = 2×(${p.b}+${p.l}) = ${a.p}.`]
+            },
+            {
+                category: 'Figuras Planas',
+                id: 'area_per_trap', title: 'Trapecio (A y P)', description: 'Base Mayor, Base Menor, Altura.',
+                theory: '<div class="formula-box">Área = ((B + b) × h) / 2<br>Perímetro = B + b + l1 + l2</div>',
+                generate: () => {
+                    const B = Math.floor(Math.random()*8)+8; 
+                    const b = Math.floor(Math.random()*5)+3; 
+                    const h = Math.floor(Math.random()*6)+4;
+                    const diff = (B-b)/2;
+                    const l = Math.sqrt(diff*diff + h*h);
+                    return { params:{B,b,h,l}, answer: {a: ((B+b)*h)/2, p: parseFloat((B+b+2*l).toFixed(2))}, question: 'Calcula Área y Perímetro.' };
+                },
+                draw: (ctx,p) => {
+                    const s=10;
+                    const w1=p.B*s, w2=p.b*s, h=p.h*s;
+                    const cx=(300-w1)/2, cy=150;
+                    ctx.clearRect(0,0,300,250);
+                    ctx.beginPath();
+                    ctx.moveTo(cx, cy); ctx.lineTo(cx+w1, cy); 
+                    ctx.lineTo(cx+(w1-w2)/2+w2, cy-h); ctx.lineTo(cx+(w1-w2)/2, cy-h); ctx.closePath();
+                    ctx.fillStyle='#FCE7F3'; ctx.fill(); ctx.stroke();
+                    ctx.setLineDash([5,5]); ctx.beginPath(); ctx.moveTo(cx+(w1-w2)/2+w2, cy-h); ctx.lineTo(cx+(w1-w2)/2+w2, cy); ctx.stroke();
+                    ctx.fillText(`B=${p.B}`, cx+w1/2-10, cy+15); ctx.fillText(`b=${p.b}`, cx+(w1-w2)/2+w2/2-10, cy-h-10); ctx.fillText(`h=${p.h}`, cx+(w1-w2)/2+w2+5, cy-h/2);
+                },
+                getSteps: (p,a) => [`B=${p.B}, b=${p.b}, h=${p.h}.`, `Área = ((${p.B}+${p.b})×${p.h})/2 = ${a.a}.`, `Perímetro = ${p.B}+${p.b}+2×${p.l.toFixed(1)} ≈ ${a.p}.`]
+            },
+            {
+                category: 'Figuras Planas',
+                id: 'area_per_circ', title: 'Círculo (A y P)', description: 'Radio y Diámetro.',
+                theory: '<div class="formula-box">Área = π × r²<br>Perímetro (C) = 2 × π × r</div>',
+                generate: () => {
+                    const r = Math.floor(Math.random()*5)+2;
+                    return { params:{r}, answer: {a: parseFloat((Math.PI*r*r).toFixed(2)), p: parseFloat((2*Math.PI*r).toFixed(2))}, question: 'Radio r. Calcula Área y Perímetro.' };
+                },
+                draw: (ctx,p) => {
+                    ctx.clearRect(0,0,300,250);
+                    const r=p.r*12;
+                    ctx.beginPath(); ctx.arc(150,125,r,0,Math.PI*2); ctx.fillStyle='#DBEAFE'; ctx.fill(); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(150,125); ctx.lineTo(150+r,125); ctx.strokeStyle='#1F2937'; ctx.stroke();
+                    ctx.fillText(`r=${p.r}`, 150+r/2, 120);
+                },
+                getSteps: (p,a) => [`Radio=${p.r}, π≈3.14.`, `Área = 3.14×${p.r}² = 3.14×${p.r*p.r} ≈ ${a.a}.`, `Perímetro = 2×3.14×${p.r} ≈ ${a.p}.`]
+            }
+        ];
+
+        // --- FUNCIONES AUXILIARES DE DIBUJO ---
+        function drawPoly(ctx, pts, w, h) {
+            ctx.clearRect(0,0,300,250);
+            const cx=(300-w*20)/2, cy=(250-h*20)/2+20;
+            ctx.beginPath();
+            ctx.moveTo(cx+pts[0][0]*20, cy+pts[0][1]*20);
+            for(let i=1;i<pts.length;i++) ctx.lineTo(cx+pts[i][0]*20, cy+pts[i][1]*20);
+            ctx.closePath();
+            ctx.fillStyle='#E0E7FF'; ctx.fill(); ctx.stroke();
+            ctx.fillStyle='#1F2937'; ctx.font='14px Arial';
+            ctx.fillText(`Base=${w}`, cx+w*10-15, cy+h*20+15); ctx.fillText(`Alt=${h}`, cx+w*20+5, cy+h*10);
+        }
+
+        // --- LÓGICA DE LA APP ---
+        let currentTopic = null, currentExercise = null;
+
+        window.onload = function() {
+            const list = document.getElementById('topicsList');
+            let lastCat = '';
+            topics.forEach((t, i) => {
+                if(t.category !== lastCat) {
+                    const head = document.createElement('div');
+                    head.className = 'category-header'; head.innerText = t.category;
+                    list.appendChild(head);
+                    lastCat = t.category;
+                }
+                const btn = document.createElement('button');
+                btn.className = 'topic-btn';
+                btn.innerHTML = `<span class="topic-icon">●</span> ${t.title}`;
+                btn.onclick = () => loadTopic(i);
+                list.appendChild(btn);
+            });
+            loadTopic(0);
+        };
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+
+        function loadTopic(i) {
+            document.querySelectorAll('.topic-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.topic-btn')[i].classList.add('active');
+            currentTopic = topics[i];
+            document.getElementById('topicTitle').innerText = currentTopic.title;
+            document.getElementById('topicDesc').innerText = currentTopic.description;
+            document.getElementById('theoryContent').innerHTML = currentTopic.theory;
+            generateNewExercise();
+            if(window.innerWidth<=768) document.getElementById('sidebar').classList.remove('open');
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast'); t.innerText = msg; t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function generateNewExercise() {
+            if(!currentTopic) return;
+            document.getElementById('stepsArea').classList.remove('visible');
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('btnShowSteps').style.display = 'none';
+            
+            currentExercise = currentTopic.generate();
+            currentTopic.draw(document.getElementById('geometryCanvas').getContext('2d'), currentExercise.params);
+            
+            document.getElementById('questionLabel').innerText = currentExercise.question;
+            const c = document.getElementById('inputContainer'); c.innerHTML = '';
+
+            if (typeof currentExercise.answer === 'object' && currentExercise.answer.a !== undefined) {
+                c.innerHTML = `
+                    <input type="number" id="ansA" placeholder="Área" style="margin-bottom:5px;">
+                    <input type="number" id="ansP" placeholder="Perímetro">
+                `;
+            } else if (currentTopic.id === 'rectas' || currentTopic.id === 'angulos') {
+                c.innerHTML = `<select id="ansVal"><option value="" disabled selected>Elige...</option>${
+                    (currentTopic.id==='rectas'?['paralelas','perpendiculares','ninguna']:['agudo','recto','obtuso','llano']).map(o=>`<option value="${o}">${o.charAt(0).toUpperCase()+o.slice(1)}</option>`).join('')
+                }</select>`;
+            } else {
+                c.innerHTML = `<input type="number" id="ansVal" placeholder="Tu respuesta...">`;
+            }
+        }
+
+        function checkAnswer() {
+            const f = document.getElementById('feedback');
+            let correct = false;
+
+            if (typeof currentExercise.answer === 'object') {
+                // Caso Area y Perimetro
+                const a = parseFloat(document.getElementById('ansA').value);
+                const p = parseFloat(document.getElementById('ansP').value);
+                if(Math.abs(a - currentExercise.answer.a) < 0.1 && Math.abs(p - currentExercise.answer.p) < 0.1) correct = true;
+            } else {
+                // Caso valor único
+                const val = document.getElementById('ansVal').value;
+                if (currentTopic.id==='angulos' || currentTopic.id==='rectas') {
+                    if(val === currentExercise.answer) correct = true;
+                } else {
+                    if(Math.abs(parseFloat(val) - currentExercise.answer) < 0.1) correct = true;
+                }
+            }
+
+            f.className = correct ? 'feedback-box success' : 'feedback-box error';
+            f.innerHTML = correct ? '<strong>¡Correcto!</strong> 🎉' : '<strong>Incorrecto.</strong> Inténtalo de nuevo.';
+            f.style.display = 'block';
+            
+            if(!correct) document.getElementById('btnShowSteps').style.display = 'flex';
+            if(correct) showToast('¡Bien hecho!');
+        }
+
+        function showSteps() {
+            const l = document.getElementById('stepsList'); l.innerHTML = '';
+            const steps = currentTopic.getSteps(currentExercise.params, currentExercise.answer);
+            steps.forEach((s, i) => {
+                const d = document.createElement('div');
+                d.className = 'step-item';
+                d.innerHTML = `<div class="step-number">${i+1}</div><div>${s}</div>`;
+                l.appendChild(d);
+            });
+            document.getElementById('stepsArea').classList.add('visible');
+            document.getElementById('stepsArea').scrollIntoView({behavior:'smooth'});
+        }
+    </script>
+</body>
+</html>
+```
